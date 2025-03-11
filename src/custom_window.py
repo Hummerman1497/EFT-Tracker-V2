@@ -43,7 +43,7 @@ class TitleBar(QWidget):
 
         # Try to load the logo file
         try:
-            pixmap = QPixmap("Assets/Icons/Ushanka_icon.ico")  # Replace with your actual logo path
+            pixmap = QPixmap("../Assets/Icons/Ushanka_icon.ico")  # Replace with your actual logo path
             self.logo_label.setPixmap(pixmap.scaled(
                 24, 24, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         except:
