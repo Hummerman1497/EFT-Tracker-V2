@@ -1,13 +1,15 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QFrame, QHBoxLayout, QPushButton, QLabel, QProgressBar, QTextEdit
 
-from src.OCRManager import OCRWorker
-from src.ui.custom_window import BorderlessMainWindow
+from src.OCR import OCRWorker
+from src.ui.BorderlessMainWindow import BorderlessMainWindow
 
 
 class OCRCustomWindow(BorderlessMainWindow):
     def __init__(self):
+        # Initialisiere die Basisklasse
         super().__init__()
 
+        # Setze den Fenstertitel in der Titelleiste
         self.title_bar.title_label.setText("EFT OCR Processor")
 
         # OCR Worker-Thread erstellen

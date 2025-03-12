@@ -182,6 +182,9 @@ class ExpandableRaidTile(QFrame):
         # Call it once to set initial position
         update_overlay_position()
 
+        # Make sure you have the necessary imports at the top of your file
+        # from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+
         # Add the map frame (which now includes image and overlay) to the map layout
         map_layout.addWidget(map_frame)
 

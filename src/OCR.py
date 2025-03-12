@@ -8,7 +8,7 @@ import shutil
 from PyQt5.QtWidgets import (QApplication)
 from PyQt5.QtCore import pyqtSignal, QThread
 
-from src.ui.OCRCustomWIndow import OCRCustomWindow
+from src.ui.OCRCustomWindow import OCRCustomWindow
 
 
 class OCRWorker(QThread):
