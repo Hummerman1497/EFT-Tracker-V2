@@ -1,9 +1,8 @@
-import sys
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QColor, QPalette, QPixmap
+from PyQt5.QtWidgets import (QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-                             QSizePolicy, QGraphicsDropShadowEffect)
-from PyQt5.QtCore import Qt, QPoint, QSize, pyqtSignal, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QFont, QIcon, QColor, QPalette, QPainter, QPixmap
+                             QGraphicsDropShadowEffect)
 
 
 class TitleBar(QWidget):
@@ -43,7 +42,7 @@ class TitleBar(QWidget):
 
         # Try to load the logo file
         try:
-            pixmap = QPixmap("../Assets/Icons/Ushanka_icon.ico")  # Replace with your actual logo path
+            pixmap = QPixmap("../../Assets/Icons/Ushanka_icon.ico")  # Replace with your actual logo path
             self.logo_label.setPixmap(pixmap.scaled(
                 24, 24, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         except:
