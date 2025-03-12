@@ -148,7 +148,6 @@ class OCRDataCorrector:
             return "Missing in Action"
 
         return corrected_text
-
     def correct_faction(self, faction_text):
         """Fixes common OCR errors in faction names"""
         if not faction_text or faction_text == "Unknown":
