@@ -2,12 +2,12 @@ import sys
 import json
 import os
 import subprocess
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
+from PyQt5.QtWidgets import (QApplication, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-                             QComboBox, QTableWidget, QTableWidgetItem, QFormLayout,
-                             QHeaderView, QGroupBox, QSpinBox, QMessageBox, QScrollArea,
-                             QFrame, QGridLayout, QFileDialog, QTextEdit, QSizePolicy, QGraphicsDropShadowEffect)
-from PyQt5.QtCore import Qt, QSettings, QThread, pyqtSignal, QTimer, QPropertyAnimation, QSize, QProcess, QMutex
+                             QTableWidget, QTableWidgetItem, QFormLayout,
+                             QHeaderView, QGroupBox, QMessageBox, QScrollArea,
+                             QFrame, QGridLayout, QFileDialog, QTextEdit)
+from PyQt5.QtCore import Qt, QSettings, QThread, pyqtSignal, QTimer, QProcess
 from PyQt5.QtGui import QColor, QPalette, QFont, QPixmap, QPainter, QFontDatabase, QPen, QBrush
 from PyQt5.QtChart import QChart, QChartView, QPieSeries
 import time
@@ -16,9 +16,8 @@ import ctypes
 import mss
 from custom_window import BorderlessMainWindow
 from eft_registry_finder import get_eft_logs_path
-import win32gui
-import win32con
-import win32process
+
+from src.AssetManager import AssetManager
 
 
 class CSharpOutputReader(QThread):
@@ -42,7 +41,6 @@ class CSharpOutputReader(QThread):
             try:
                 # Read single bytes from the pipe instead of lines
                 if not hasattr(self.process.stdout, 'read'):
-                    # If stdout property doesn't have the read method, abort
                     self.output_received.emit("Process doesn't have a readable stdout property")
                     break
 
@@ -333,7 +331,7 @@ class ExpandableRaidTile(QFrame):
         exp_layout.setContentsMargins(0, 0, 0, 0)
 
         exp_icon_label = QLabel()
-        exp_icon_pixmap = QPixmap("Assets/Icons/exp_icon.png")
+        exp_icon_pixmap = QPixmap("../Assets/Icons/exp_icon.png")
         exp_icon_label.setFixedSize(30, 30)
         exp_icon_label.setPixmap(exp_icon_pixmap.scaled(30, 30, aspectRatioMode=Qt.KeepAspectRatio))
         exp_value_label = QLabel(str(self.raid_data.get("exp", 0)))
@@ -653,7 +651,6 @@ class ExpandableRaidTile(QFrame):
 
 class EFTTracker(BorderlessMainWindow):
     def __init__(self):
-        # Initialize the custom window base class
         super().__init__()
         self.assets = asset_manager
 
@@ -698,14 +695,12 @@ class EFTTracker(BorderlessMainWindow):
         self.update_stats()
         self.update_raid_tiles()
 
-
-
         # Size the window
         self.resize(1200, 900)
 
 
     def setup_eft_content(self):
-        """Setup the main EFT Tracker content in the custom window's content area"""
+        """Set up the main EFT Tracker content in the custom window's content area"""
         # Create tabs widget
         self.tabs = QTabWidget()
 
@@ -804,6 +799,7 @@ class EFTTracker(BorderlessMainWindow):
 
         # Reset process reference
         self.process = None
+
     def set_mouse_pos(self, x, y):
         ctypes.windll.user32.SetCursorPos(x, y)
 
@@ -945,6 +941,7 @@ class EFTTracker(BorderlessMainWindow):
                 self.log_message(f"Error resetting statistics flag: {str(e)}", "error")
                 import traceback
                 self.log_message(traceback.format_exc(), "error")
+
     def setup_dark_theme(self):
         # Schriftart laden
         font_path = self.assets.get_font_path("bender.regular.otf")
@@ -1105,7 +1102,6 @@ class EFTTracker(BorderlessMainWindow):
         self.update_stats()
         self.log_message("OCR data reloaded and UI updated.", "python")
 
-
     def update_stats(self):
         """Update all statistics displays"""
         # Aktualisiere die Statistiken
@@ -1115,7 +1111,7 @@ class EFTTracker(BorderlessMainWindow):
         total_kills = sum(raid["kills"] for raid in self.raids)
 
         # Calculate K/D as kills divided by deaths
-        deaths = total_raids - survived_raids
+        deaths = total_raids - survived_raids  # TODO: nichts deaths sondern deaths+runthroughs
         kd_ratio = (total_kills / deaths) if deaths > 0 else total_kills
 
         self.total_raids_label.setText(f"{total_raids}")
@@ -1338,7 +1334,7 @@ class EFTTracker(BorderlessMainWindow):
         self.pie_chart = QChart()
         # Hintergrundbild setzen
 
-        background_image = QPixmap("Assets/Images/Norvinskzone.png")  # Pfad zum Bild anpassen
+        background_image = QPixmap("../Assets/Images/Norvinskzone.png")  # Pfad zum Bild anpassen
         self.pie_chart.setBackgroundBrush(QBrush(background_image))
 
         legend_pen = QPen(QColor(246, 231, 197))  # Hier die gewünschte Farbe anpassen
@@ -1882,7 +1878,7 @@ class EFTTracker(BorderlessMainWindow):
     def start_ocr(self):
         try:
             # Use the asset manager to get the correct path
-            exe_path = os.path.join(self.assets.base_path, "Assets", "OCR.exe")
+            exe_path = os.path.join(self.assets.base_path, "../Assets", "OCR.exe")
 
             # Log the path for debugging
             print(f"OCR executable path: {exe_path}")
@@ -1892,7 +1888,7 @@ class EFTTracker(BorderlessMainWindow):
             # Check if the file exists
             if not os.path.exists(exe_path):
                 # Try an alternative path if the first one fails
-                exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Assets", "OCR.exe")
+                exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../Assets", "OCR.exe")
                 print(f"Trying alternative OCR path: {exe_path}")
                 if hasattr(self, 'log_text_edit'):
                     self.log_message(f"Trying alternative OCR path: {exe_path}", "python")
@@ -2092,65 +2088,30 @@ class EFTTracker(BorderlessMainWindow):
         super().closeEvent(event)
 
 
-class AssetManager:
-    def __init__(self):
-        # Determine if we're running from executable or source
-        try:
-            # PyInstaller creates a temp folder and stores path in _MEIPASS
-            self.base_path = sys._MEIPASS
-            self.running_from_exe = True
-        except Exception:
-            self.base_path = os.path.abspath(os.path.dirname(__file__))
-            self.running_from_exe = False
+"""
+Entry point for the EFT Tracker application.
 
-        # Log the base path for debugging
-        print(f"Asset base path: {self.base_path}")
+This script initializes and starts the PyQt-based GUI application. It sets up 
+the main event loop, loads the application icon (if available), and displays 
+the main window.
 
-        # Define asset directories
-        self.asset_dirs = {
-            "maps": os.path.join(self.base_path, "Assets", "Maps"),
-            "icons": os.path.join(self.base_path, "Assets", "Icons"),
-            "fonts": os.path.join(self.base_path, "Assets"),
-            "csharp": os.path.join(self.base_path, "Assets", "C-Sharp"),
-            "images": os.path.join(self.base_path, "Assets"),
-        }
+Workflow:
+1. Creates a QApplication instance.
+2. Initializes the AssetManager to manage file paths.
+3. Retrieves and sets the application icon if it exists.
+4. Instantiates and displays the main window (EFTTracker).
+5. Starts the PyQt event loop to handle user interactions.
 
-        # Verify directories exist
-        for dir_name, dir_path in self.asset_dirs.items():
-            if not os.path.exists(dir_path):
-                print(f"Warning: Asset directory '{dir_name}' not found at: {dir_path}")
+Usage:
+    Run this script directly to launch the EFT Tracker application.
 
-    def get_path(self, asset_type, filename):
-        """Get full path to an asset"""
-        if asset_type not in self.asset_dirs:
-            print(f"Warning: Unknown asset type '{asset_type}'")
-            return os.path.join(self.base_path, "Assets", filename)
+Notes:
+- Ensure that all required dependencies (PyQt5, AssetManager, EFTTracker) are installed.
+- The application icon should be located in the appropriate assets directory.
 
-        full_path = os.path.join(self.asset_dirs[asset_type], filename)
-
-        # Verify file exists
-        if not os.path.exists(full_path):
-            print(f"Warning: Asset file not found: {full_path}")
-
-        return full_path
-
-    def get_map_path(self, map_name, suffix="_Banner.png"):
-        """Helper specifically for map images"""
-        return self.get_path("maps", f"{map_name}{suffix}")
-
-    def get_icon_path(self, icon_name):
-        """Helper for icon images"""
-        return self.get_path("icons", icon_name)
-
-    def get_font_path(self, font_name):
-        """Helper for fonts"""
-        return self.get_path("fonts", font_name)
-
-    def get_csharp_path(self, exe_name):
-        """Helper for C# executables"""
-        return self.get_path("csharp", exe_name)
-
-
+Author: Janis Groeger
+Date: 11.03.2025
+"""
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     asset_manager = AssetManager()
